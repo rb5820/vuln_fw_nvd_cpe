@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- CPE Dictionary Refresh Cron Job -->
+        <record id="cron_cpe_dictionary_refresh" model="ir.cron">
+            <field name="name">CPE Dictionary Nightly Refresh</field>
+            <field name="model_id" ref="model_vuln_fw_nvd_cpe_dictionary"/>
+            <field name="state">code</field>
+            <field name="code">
+                model.with_context(automated_sync=True).refresh_cpe_dictionary()
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">False</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="priority">5</field>
+            <!-- Run at 2:30 AM -->
+            <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).replace(hour=2, minute=30, second=0)"/>
+        </record>
+        
+        <!-- CPE Match Cleanup Cron Job -->
+        <record id="cron_cpe_match_cleanup" model="ir.cron">
+            <field name="name">CPE Match Cleanup</field>
+            <field name="model_id" ref="model_vuln_fw_nvd_cpe_match"/>
+            <field name="state">code</field>
+            <field name="code">
+                model.with_context(automated_cleanup=True).cleanup_stale_matches()
+            </field>
+            <field name="interval_number">7</field>
+            <field name="interval_type">days</field>
+            <field name="active">False</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="priority">10</field>
+            <!-- Run weekly on Sunday at 3:00 AM -->
+            <field name="nextcall" eval="(DateTime.now() + timedelta(days=(6-DateTime.now().weekday())%7)).replace(hour=3, minute=0, second=0)"/>
+        </record>
+        
+        <!-- CPE Statistics Update Cron Job -->
+        <record id="cron_cpe_statistics_update" model="ir.cron">
+            <field name="name">CPE Statistics Update</field>
+            <field name="model_id" ref="model_vuln_fw_nvd_cpe_dictionary"/>
+            <field name="state">code</field>
+            <field name="code">
+                model.update_cpe_statistics()
+            </field>
+            <field name="interval_number">6</field>
+            <field name="interval_type">hours</field>
+            <field name="active">True</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="priority">15</field>
+            <field name="nextcall" eval="DateTime.now() + timedelta(hours=6)"/>
+        </record>
+        
+    </data>
+</odoo>

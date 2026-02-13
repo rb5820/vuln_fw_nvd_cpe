@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vuln_fw_nvd_cpe_dictionary_user,vuln.fw.nvd.cpe.dictionary user,model_vuln_fw_nvd_cpe_dictionary,group_cpe_user,1,0,0,0
+access_vuln_fw_nvd_cpe_dictionary_manager,vuln.fw.nvd.cpe.dictionary manager,model_vuln_fw_nvd_cpe_dictionary,group_cpe_manager,1,1,1,1
+access_vuln_fw_nvd_cpe_match_user,vuln.fw.nvd.cpe.match user,model_vuln_fw_nvd_cpe_match,group_cpe_user,1,0,0,0
+access_vuln_fw_nvd_cpe_match_manager,vuln.fw.nvd.cpe.match manager,model_vuln_fw_nvd_cpe_match,group_cpe_manager,1,1,1,1
+access_vuln_fw_nvd_cpe_dictionary_public,vuln.fw.nvd.cpe.dictionary public,model_vuln_fw_nvd_cpe_dictionary,base.group_public,1,0,0,0

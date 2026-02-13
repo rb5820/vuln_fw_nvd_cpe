@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- CPE Dictionary Actions -->
+    <record id="action_cpe_dictionary_list" model="ir.actions.act_window">
+        <field name="name">CPE Dictionary</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">vuln.fw.nvd.cpe.dictionary</field>
+        <field name="view_mode">list,form,search</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+    
+    <!-- CPE Matches Actions -->
+    <record id="action_cpe_matches_list" model="ir.actions.act_window">
+        <field name="name">Asset CPE Matches</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">vuln.fw.nvd.cpe.match</field>
+        <field name="view_mode">kanban,list,form,search</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- CPE Search Action (for selection widgets) -->
+    <record id="action_cpe_search" model="ir.actions.act_window">
+        <field name="name">Search CPE Entries</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">vuln.fw.nvd.cpe.dictionary</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_not_deprecated': 1}</field>
+    </record>
+
+    <!-- Server Actions for Bulk Operations -->
+    <record id="action_server_refresh_cpe_dictionary" model="ir.actions.server">
+        <field name="name">Refresh CPE Dictionary</field>
+        <field name="model_id" ref="model_vuln_fw_nvd_cpe_dictionary"/>
+        <field name="binding_model_id" ref="model_vuln_fw_nvd_cpe_dictionary"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+            action = model.refresh_cpe_dictionary()
+        </field>
+    </record>
+
+    <record id="action_server_update_cpe_stats" model="ir.actions.server">
+        <field name="name">Update CPE Statistics</field>
+        <field name="model_id" ref="model_vuln_fw_nvd_cpe_dictionary"/>
+        <field name="binding_model_id" ref="model_vuln_fw_nvd_cpe_dictionary"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+            action = model.update_cpe_statistics()
+        </field>
+    </record>
+
+    <record id="action_server_cleanup_stale_matches" model="ir.actions.server">
+        <field name="name">Cleanup Stale Matches</field>
+        <field name="model_id" ref="model_vuln_fw_nvd_cpe_match"/>
+        <field name="binding_model_id" ref="model_vuln_fw_nvd_cpe_match"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+            action = model.cleanup_stale_matches()
+        </field>
+    </record>
+
+    <!-- CPE Dictionary Menu -->
+    <menuitem
+        id="menu_cpe_management"
+        name="📋 CPE Management"
+        parent="vuln_fw_nvd.menu_nvd_root"
+        sequence="25"/>
+
+    <menuitem
+        id="menu_cpe_dictionary"
+        name="CPE Dictionary"
+        parent="menu_cpe_management"
+        action="action_cpe_dictionary_list"
+        sequence="10"/>
+
+    <menuitem
+        id="menu_cpe_matches"
+        name="CPE Matches"
+        parent="menu_cpe_management"
+        action="action_cpe_matches_list"
+        sequence="20"/>
+
+</odoo>

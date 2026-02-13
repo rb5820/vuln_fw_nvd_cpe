@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- CPE Dictionary Views -->
+    <record id="view_cpe_dictionary_form" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.dictionary.form</field>
+        <field name="model">vuln.fw.nvd.cpe.dictionary</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_view_vulnerabilities" type="object" 
+                            string="View Vulnerabilities" class="oe_highlight"
+                            invisible="vulnerability_count == 0"/>
+                    <button name="action_view_matches" type="object" 
+                            string="View Matches" class="btn-primary"
+                            invisible="match_count == 0"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_vulnerabilities" type="object" 
+                                class="oe_stat_button" icon="fa-bug">
+                            <field name="vulnerability_count" widget="statinfo" 
+                                   string="Vulnerabilities"/>
+                        </button>
+                        <button name="action_view_matches" type="object" 
+                                class="oe_stat_button" icon="fa-link">
+                            <field name="match_count" widget="statinfo" 
+                                   string="Matches"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Deprecated" 
+                            bg_color="text-bg-danger" invisible="not deprecated"/>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="title" placeholder="CPE Title"/>
+                        </h1>
+                        <h3>
+                            <field name="cpe_name" readonly="1" class="text-muted"/>
+                        </h3>
+                    </div>
+                    
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="part" widget="radio"/>
+                            <field name="vendor"/>
+                            <field name="product"/>
+                            <field name="version"/>
+                        </group>
+                        <group name="metadata" string="Metadata">
+                            <field name="cpe_name_id"/>
+                            <field name="deprecated"/>
+                            <field name="deprecated_date" invisible="not deprecated"/>
+                            <field name="deprecated_by" invisible="not deprecated"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page name="details" string="Details">
+                            <group>
+                                <group name="extended_info" string="Extended Information">
+                                    <field name="update_component"/>
+                                    <field name="edition"/>
+                                    <field name="language"/>
+                                    <field name="sw_edition"/>
+                                </group>
+                                <group name="target_info" string="Target Information">
+                                    <field name="target_sw"/>
+                                    <field name="target_hw"/>
+                                    <field name="other"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page name="references" string="References">
+                            <field name="references" widget="text"/>
+                        </page>
+                        <page name="sync_info" string="Sync Information">
+                            <group>
+                                <group name="sync_details" string="Synchronization">
+                                    <field name="last_modified"/>
+                                    <field name="sync_date"/>
+                                </group>
+                                <group name="categorization" string="Categorization">
+                                    <field name="tags"/>
+                                    <field name="search_text" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter />
+            </form>
+        </field>
+    </record>
+
+    <record id="view_cpe_dictionary_list" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.dictionary.list</field>
+        <field name="model">vuln.fw.nvd.cpe.dictionary</field>
+        <field name="arch" type="xml">
+            <list default_order="product, vendor, version" 
+                  multi_edit="1" sample="1">
+                <field name="part" widget="badge" 
+                       decoration-info="part == 'a'" 
+                       decoration-warning="part == 'h'"
+                       decoration-success="part == 'o'"/>
+                <field name="vendor"/>
+                <field name="product"/>
+                <field name="version"/>
+                <field name="title"/>
+                <!-- Temporarily disabled vulnerability fields for standalone mode -->
+                <!--
+                <field name="vulnerability_count" widget="integer" 
+                       decoration-danger="vulnerability_count > 100"
+                       decoration-warning="vulnerability_count > 10"/>
+                <field name="match_count" widget="integer"/>
+                -->
+                <field name="deprecated" widget="boolean_toggle"/>
+                <field name="last_modified" widget="datetime"/>
+                <field name="tags" optional="show"/>
+                <field name="cpe_name" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cpe_dictionary_search" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.dictionary.search</field>
+        <field name="model">vuln.fw.nvd.cpe.dictionary</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="cpe_name"/>
+                <field name="title"/>
+                <field name="vendor"/>
+                <field name="product"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- CPE Match Views -->
+    <record id="view_cpe_match_form" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.match.form</field>
+        <field name="model">vuln.fw.nvd.cpe.match</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_verify_match" type="object" 
+                            string="Verify Match" class="oe_highlight"
+                            invisible="status != 'pending'"/>
+                    <button name="action_reject_match" type="object" 
+                            string="Reject Match" class="btn-secondary"
+                            invisible="status != 'pending'"/>
+                    <button name="action_view_asset" type="object" 
+                            string="View Asset" class="btn-primary"/>
+                    <button name="action_view_vulnerabilities" type="object" 
+                            string="View Vulnerabilities" class="btn-primary"
+                            invisible="vulnerability_count == 0"/>
+                    <field name="status" widget="statusbar" 
+                           statusbar_visible="pending,verified,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_vulnerabilities" type="object" 
+                                class="oe_stat_button" icon="fa-bug">
+                            <field name="vulnerability_count" widget="statinfo" 
+                                   string="Vulnerabilities"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Inactive" 
+                            bg_color="text-bg-secondary" invisible="active"/>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="display_name" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group name="match_info" string="Match Information">
+                            <field name="cpe_dictionary_id" required="1"/>
+                            <field name="confidence_score" widget="percentpie"/>
+                            <field name="match_method"/>
+                            <field name="match_date"/>
+                            <field name="verified_date" readonly="1"/>
+                        </group>
+                        <group name="asset_info" string="Asset Information">
+                            <field name="asset_model"/>
+                            <field name="asset_id"/>
+                            <field name="asset_name"/>
+                        </group>
+                    </group>
+                    
+                    <group name="cpe_info" string="CPE Information">
+                        <field name="cpe_name" readonly="1"/>
+                        <field name="vendor" readonly="1"/>
+                        <field name="product" readonly="1"/>
+                        <field name="version" readonly="1"/>
+                    </group>
+                    
+                    <notebook>
+                        <page name="criteria" string="Match Criteria">
+                            <field name="match_criteria" widget="ace" 
+                                   options="{'mode': 'json'}"/>
+                        </page>
+                        <page name="notes" string="Notes">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter />
+            </form>
+        </field>
+    </record>
+
+    <record id="view_cpe_match_list" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.match.list</field>
+        <field name="model">vuln.fw.nvd.cpe.match</field>
+        <field name="arch" type="xml">
+            <list default_order="confidence_score desc, match_date desc" 
+                  multi_edit="1" sample="1">
+                <field name="status" widget="badge" 
+                       decoration-success="status == 'verified'"
+                       decoration-warning="status == 'pending'"
+                       decoration-danger="status == 'rejected'"
+                       decoration-muted="status == 'outdated'"/>
+                <field name="asset_name"/>
+                <field name="vendor"/>
+                <field name="product"/>
+                <field name="version"/>
+                <field name="confidence_score" widget="percentpie"/>
+                <field name="match_method" widget="badge"/>
+                <field name="match_date" widget="datetime"/>
+                <field name="vulnerability_count" widget="integer"
+                       decoration-danger="vulnerability_count > 50"
+                       decoration-warning="vulnerability_count > 10"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="verified_date" optional="show"/>
+                <field name="asset_model" optional="hide"/>
+                <field name="cpe_name" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+
+    <!-- CPE Match Kanban View -->
+    <record id="view_cpe_match_kanban" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.match.kanban</field>
+        <field name="model">vuln.fw.nvd.cpe.match</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="status" class="o_kanban_small_column">
+                <field name="status"/>
+                <field name="asset_name"/>
+                <field name="vendor"/>
+                <field name="product"/>
+                <field name="version"/>
+                <field name="confidence_score"/>
+                <field name="vulnerability_count"/>
+                <field name="match_method"/>
+                <field name="active"/>
+                <progressbar field="confidence_score" colors='{"0.8": "success", "0.5": "warning", "0": "danger"}'/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <strong class="o_kanban_record_title">
+                                    <field name="asset_name"/>
+                                </strong>
+                                <div class="o_kanban_record_headings">
+                                    <span class="badge text-bg-info" t-if="record.match_method.raw_value == 'automatic'">Auto</span>
+                                    <span class="badge text-bg-secondary" t-if="record.match_method.raw_value == 'manual'">Manual</span>
+                                    <span class="badge text-bg-danger" t-if="record.vulnerability_count.raw_value > 50">
+                                        <field name="vulnerability_count"/> vulns
+                                    </span>
+                                    <span class="badge text-bg-warning" t-elif="record.vulnerability_count.raw_value > 0">
+                                        <field name="vulnerability_count"/> vulns
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="text-muted">
+                                    <i class="fa fa-industry" title="Product"/> <field name="vendor"/> <field name="product"/>
+                                    <span t-if="record.version.raw_value"> v<field name="version"/></span>
+                                </div>
+                                <div class="mt-1">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar" t-att-style="'width: ' + (record.confidence_score.raw_value * 100) + '%'" 
+                                             t-att-class="{
+                                                'bg-success': record.confidence_score.raw_value >= 0.8,
+                                                'bg-warning': record.confidence_score.raw_value >= 0.5 and record.confidence_score.raw_value &lt; 0.8,
+                                                'bg-danger': record.confidence_score.raw_value &lt; 0.5
+                                             }">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted"><field name="confidence_score" widget="percentpie"/> confidence</small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+</odoo>
