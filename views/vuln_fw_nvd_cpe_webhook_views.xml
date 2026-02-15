@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- CPE Webhook Form View Extension - Adds CPE-specific payload options -->
+        <record id="vuln_fw_nvd_cpe_webhook_form" model="ir.ui.view">
+            <field name="name">CPE Webhook Form</field>
+            <field name="model">vuln.fw.nvd.cpe.webhook</field>
+            <field name="inherit_id" ref="vuln_fw_nvd.vuln_fw_nvd_webhook_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='triggers']" position="after">
+                    <page string="CPE Payload Options" name="cpe_payload">
+                        <group string="CPE-Specific Content">
+                            <field name="include_full_product" widget="boolean_toggle"/>
+                            <field name="include_cpe_uri" widget="boolean_toggle"/>
+                            <field name="include_parent_child" widget="boolean_toggle"/>
+                            <field name="include_metadata" widget="boolean_toggle"/>
+                        </group>
+                        
+                        <separator string="Custom Payload Template"/>
+                        <group>
+                            <field name="payload_template" widget="ace" options="{'mode': 'json'}" nolabel="1"
+                                   placeholder="Optional: Custom JSON template. Use {product_id}, {product_name}, {cpe_uri}, etc."/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+        
+    </data>
+</odoo>
+

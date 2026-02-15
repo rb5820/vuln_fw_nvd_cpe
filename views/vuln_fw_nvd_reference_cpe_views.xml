@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Extend NVD Reference Form View with CPE Relationships -->
+    <record id="view_nvd_reference_form_cpe" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.reference.form.cpe</field>
+        <field name="model">vuln.fw.nvd.reference</field>
+        <field name="inherit_id" ref="vuln_fw_nvd.view_nvd_reference_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add stat buttons for CPE entities -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_cpe_products" type="object" class="oe_stat_button" icon="fa-cube">
+                    <field name="cpe_product_ids" widget="statinfo" string="Products"/>
+                </button>
+                <button name="action_view_cpe_vendors" type="object" class="oe_stat_button" icon="fa-building">
+                    <field name="cpe_vendor_ids" widget="statinfo" string="Vendors"/>
+                </button>
+            </xpath>
+            
+            <!-- Add entity name and type fields -->
+            <xpath expr="//field[@name='ref_type']" position="after">
+                <field name="entity_type"/>
+                <field name="entity_name"/>
+            </xpath>
+            
+            <!-- Add CPE notebook pages -->
+            <xpath expr="//notebook" position="inside">
+                <page string="CPE Products" invisible="not cpe_product_ids">
+                    <field name="cpe_product_ids">
+                        <list>
+                            <field name="name"/>
+                            <field name="vendor_id"/>
+                            <field name="version"/>
+                            <field name="cpe_part"/>
+                            <field name="title"/>
+                            <field name="active"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="CPE Vendors" invisible="not cpe_vendor_ids">
+                    <field name="cpe_vendor_ids">
+                        <list>
+                            <field name="name"/>
+                            <field name="display_name"/>
+                            <field name="product_count"/>
+                            <field name="cpe_count"/>
+                            <field name="website" widget="url"/>
+                            <field name="active"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+    
+</odoo>

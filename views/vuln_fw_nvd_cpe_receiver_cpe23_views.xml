@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- CPE 2.3 Receiver Form View Extension -->
+        <record id="vuln_fw_nvd_cpe_receiver_cpe23_form" model="ir.ui.view">
+            <field name="name">CPE 2.3 Webhook Receiver Form</field>
+            <field name="model">vuln.fw.nvd.cpe.receiver.cpe23</field>
+            <field name="inherit_id" ref="vuln_fw_nvd.vuln_fw_nvd_webhook_receiver_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('alert', 'alert-info')]" position="replace">
+                    <div class="alert alert-success" role="alert">
+                        <strong>📝 CPE 2.3 Receiver</strong> - Specialized receiver for processing full CPE 2.3 formatted entries and dictionary updates
+                    </div>
+                </xpath>
+                <xpath expr="//page[@name='security']" position="after">
+                    <page string="CPE 2.3 Processing" name="cpe23_processing">
+                        <group string="Parsing &amp; Auto-Creation">
+                            <field name="parse_cpe_name" widget="boolean_toggle"/>
+                            <field name="auto_create_dictionary" widget="boolean_toggle"/>
+                            <field name="auto_update_dictionary" widget="boolean_toggle"/>
+                        </group>
+                        
+                        <group string="Data Merging &amp; Vendors">
+                            <field name="merge_with_existing" widget="boolean_toggle"/>
+                            <field name="create_missing_vendors" widget="boolean_toggle"/>
+                        </group>
+                        
+                        <separator string="Batch Processing"/>
+                        <group>
+                            <field name="batch_size"/>
+                            <field name="skip_deprecated" widget="boolean_toggle"/>
+                        </group>
+                    </page>
+                    
+                    <page string="CPE Field Mapping" name="cpe_mapping">
+                        <group>
+                            <field name="cpe_field_mapping" widget="ace" options="{'mode': 'json'}" nolabel="1" 
+                                   placeholder='{"cpe_name": "cpe_name", "title": "title", "references": "references", "deprecated": "deprecated"}' />
+                        </group>
+                        <p class="text-muted">
+                            <strong>Note:</strong> Map webhook JSON fields to CPE dictionary model fields. 
+                            Common fields: cpe_name, title, part, vendor, product, version, references, deprecated
+                        </p>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+        
+        <!-- CPE 2.3 Receiver List View -->
+        <record id="vuln_fw_nvd_cpe_receiver_cpe23_list" model="ir.ui.view">
+            <field name="name">CPE 2.3 Inbound Webhook Receivers</field>
+            <field name="model">vuln.fw.nvd.cpe.receiver.cpe23</field>
+            <field name="arch" type="xml">
+                <list string="CPE 2.3 Inbound Receivers" decoration-danger="last_status == 'error'" decoration-success="last_status == 'success'">
+                    <field name="name"/>
+                    <field name="active" widget="boolean"/>
+                    <field name="webhook_token"/>
+                    <field name="auto_create_dictionary" widget="boolean"/>
+                    <field name="auto_update_dictionary" widget="boolean"/>
+                    <field name="last_received"/>
+                    <field name="last_status"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- CPE 2.3 Receiver Search View -->
+        <record id="vuln_fw_nvd_cpe_receiver_cpe23_search" model="ir.ui.view">
+            <field name="name">CPE 2.3 Receiver Search</field>
+            <field name="model">vuln.fw.nvd.cpe.receiver.cpe23</field>
+            <field name="arch" type="xml">
+                <search string="CPE 2.3 Receiver Search">
+                    <field name="name" string="Receiver Name"/>
+                    <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                    <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
+                    <separator/>
+                    <filter name="auto_create" string="Auto Create" domain="[('auto_create_dictionary', '=', True)]"/>
+                    <filter name="auto_update" string="Auto Update" domain="[('auto_update_dictionary', '=', True)]"/>
+                    <separator/>
+                    <filter name="success" string="Last Success" domain="[('last_status', '=', 'success')]"/>
+                    <filter name="error" string="Last Error" domain="[('last_status', '=', 'error')]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="by_status" string="Status" context="{'group_by': 'last_status'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        
+    </data>
+</odoo>

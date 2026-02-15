@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- CPE Webhook Receiver Form View Extension - Adds CPE-specific processing options for inbound webhooks -->
+        <record id="vuln_fw_nvd_cpe_webhook_receiver_form" model="ir.ui.view">
+            <field name="name">CPE Inbound Webhook Receiver Form</field>
+            <field name="model">vuln.fw.nvd.cpe.webhook.receiver</field>
+            <field name="inherit_id" ref="vuln_fw_nvd.vuln_fw_nvd_webhook_receiver_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='security']" position="after">
+                    <page string="CPE Processing" name="cpe_processing">
+                        <group string="Auto Processing">
+                            <field name="auto_create_products" widget="boolean_toggle"/>
+                            <field name="auto_update_products" widget="boolean_toggle"/>
+                        </group>
+                        
+                        <separator string="Update Configuration"/>
+                        <group>
+                            <field name="update_field_list" widget="ace" options="{'mode': 'json'}" nolabel="1"/>
+                        </group>
+                        
+                        <group string="Matching">
+                            <field name="match_by_cpe_uri" widget="boolean_toggle"/>
+                        </group>
+                    </page>
+                    
+                    <page string="Vendor Configuration" name="vendors">
+                        <group>
+                            <field name="default_vendor_id"/>
+                        </group>
+                        
+                        <separator string="Vendor Name Mapping"/>
+                        <group>
+                            <field name="vendor_mapping" widget="ace" options="{'mode': 'json'}" nolabel="1" 
+                                   placeholder='{"External Vendor Name": 123, "Another Vendor": 456}'/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+        
+    </data>
+</odoo>
+

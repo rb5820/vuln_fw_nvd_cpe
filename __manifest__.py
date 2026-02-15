@@ -56,13 +56,22 @@
         
         # Views (must be loaded before menus)
         'views/vuln_fw_nvd_cpe_dictionary.xml',
-        'views/vuln_fw_nvd_connector_extend_views.xml',
-        'views/settings_views.xml',
+        'views/vuln_fw_nvd_cpe_vendor_views.xml',
+        'views/vuln_fw_nvd_cpe_product_views.xml',
+        'views/vuln_fw_nvd_reference_cpe_views.xml',
+        'views/vuln_fw_nvd_cpe_webhook_views.xml',
+        'views/vuln_fw_nvd_cpe_webhook_receiver_views.xml',
+        'views/vuln_fw_nvd_cpe_receiver_cpe23_views.xml',
+
+        'views/vuln_fw_nvd_cpe_api_connector_views.xml',
         'views/menus.xml',
         
         # Data
+        'data/vuln_fw_nvd_cpe_vendor_data.xml',
         'data/ir_cron.xml',
-        'data/demo_connector.xml',
+        #'data/demo_connector.xml',
+        # Connectors (must be loaded after views to avoid reference issues)
+        'data/vuln_fw_nvd_api_connector.xml',
     ],
     'demo': [],
     'installable': True,

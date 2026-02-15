@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Common Platform Enumeration API Thread Form View -->
+    <record id="view_vuln_fw_nvd_cpe_api_connector_form" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.api.connector.form</field>
+        <field name="model">vuln.fw.nvd.cpe.api.connector</field>
+        <field name="arch" type="xml">
+            <form string="Common Platform Enumeration API Thread">
+                <header>   
+                    <field name="active" string="Active" widget="boolean_toggle"/>
+                    <field name="connector_active" string="Connector Active" widget="boolean_toggle"/>
+                    <field name="debug_mode" string="Debug Mode" widget="boolean_toggle"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Common Platform Enumeration API Thread Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="parent_connector_id" options="{'no_create': True}"/>
+                            <field name="api_url"/>
+                            <field name="batch_size"/>
+                        </group>
+                        <group>
+                            <field name="last_sync_date"/>
+                            <field name="last_cpe_sync"/>
+                            <field name="cpe_sync_in_progress"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="CPE Processing" name="cpe_processing">
+                            <group>
+                                <group string="Processing Options">
+                                    <field name="enable_cpe_processing"/>
+                                    <field name="auto_create_cpe_dictionary"/>
+                                    <field name="full_cpe_sync_active"/>
+                                    <field name="cpe_follows_cve_creation_active"/>
+                                    <field name="cpe_confidence_threshold"/>
+                                </group>
+                                <group string="Statistics">
+                                    <field name="cpe_entries_created"/>
+                                    <field name="cpe_matches_processed"/>
+                                    <field name="cpe_processing_errors"/>
+                                </group>
+                            </group>
+                            <group string="Selected Vendors">
+                                <field name="selected_vendors" nolabel="1" placeholder="List vendor names to focus on (one per line). Leave empty for all vendors."/>
+                            </group>
+                        </page>
+                        <page string="Processing Log" name="processing_log">
+                            <field name="cpe_processing_log" nolabel="1" placeholder="Processing log will appear here..."/>
+                        </page>
+                        <page string="Manual CPE Test" name="manual_test">
+                            <group>
+                                <group string="Test Single CPE URI">
+                                    <field name="test_cpe_uri" placeholder="cpe:2.3:a:microsoft:edge_chromium:143.0.3650.66:*:*:*:-:windows:*:*"/>
+                                </group>
+                            </group>
+                            <div class="oe_button_box" style="margin-top: 16px;">
+                                <button name="action_process_test_cpe" 
+                                        type="object" 
+                                        string="Process CPE URI" 
+                                        class="oe_highlight"
+                                        icon="fa-play"
+                                        help="Parse and process the CPE URI above. Results will appear in the Processing Log tab."/>
+                            </div>
+                            <group string="Instructions">
+                                <div>
+                                    <p><strong>How to use:</strong></p>
+                                    <ol>
+                                        <li>Enter a valid CPE 2.3 URI in the field above</li>
+                                        <li>Click "Process CPE URI" to parse and analyze the CPE</li>
+                                        <li>Check the "Processing Log" tab for detailed results</li>
+                                    </ol>
+                                    <p><strong>CPE URI Format:</strong></p>
+                                    <code>cpe:2.3:type:vendor:product:version:update:edition:language:sw_edition:target_sw:target_hw:other</code>
+                                    <p style="margin-top: 8px;"><strong>Examples:</strong></p>
+                                    <ul>
+                                        <li><code>cpe:2.3:a:microsoft:edge_chromium:143.0.3650.66:*:*:*:-:windows:*:*</code></li>
+                                        <li><code>cpe:2.3:a:cisco:ios:15.0:*:*:*:*:*:*:*</code></li>
+                                        <li><code>cpe:2.3:o:microsoft:windows_10:1909:*:*:*:*:*:*:*</code></li>
+                                        <li><code>cpe:2.3:a:apache:http_server:2.4.46:*:*:*:*:*:*:*</code></li>
+                                    </ul>
+                                    <p style="margin-top: 8px;"><strong>What this test does:</strong></p>
+                                    <ul>
+                                        <li>✓ Parses all CPE components (vendor, product, version, etc.)</li>
+                                        <li>✓ Checks if CPE exists in local dictionary</li>
+                                        <li>✓ Creates dictionary entry if auto-create is enabled</li>
+                                        <li>✓ Calculates confidence score for matching</li>
+                                        <li>✓ Validates against confidence threshold</li>
+                                    </ul>
+                                </div>
+                            </group>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" nolabel="1" placeholder="Additional configuration notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- CPE API Thread List View -->
+    <record id="view_vuln_fw_nvd_cpe_api_connector_tree" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.api.connector.list</field>
+        <field name="model">vuln.fw.nvd.cpe.api.connector</field>
+        <field name="arch" type="xml">
+            <list string="Common Platform Enumeration API Threads">
+                <field name="name"/>
+                <field name="parent_connector_id"/>
+                <field name="last_sync_date"/>
+                <field name="connector_active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Common Platform Enumeration API Thread Action -->
+    <record id="action_vuln_fw_nvd_cpe_api_connector" model="ir.actions.act_window">
+        <field name="name">Common Platform Enumeration  API Threads</field>
+        <field name="res_model">vuln.fw.nvd.cpe.api.connector</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Common Platform Enumeration API Thread to start pulling CPE data from the National Vulnerability Database!
+            </p>
+            <p>
+                Configure Common Platform Enumeration API threads to automatically pull platform enumeration data from the  National Vulnerability Database!
+            </p>
+        </field>
+    </record>
+
+</odoo>

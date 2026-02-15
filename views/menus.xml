@@ -65,6 +65,16 @@
         </field>
     </record>
 
+    <!-- CPE 2.3 Receiver Action -->
+    <record id="action_cpe_receiver_cpe23_list" model="ir.actions.act_window">
+        <field name="name">CPE 2.3 Receivers</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">vuln.fw.nvd.cpe.receiver.cpe23</field>
+        <field name="view_mode">list,form,search</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+
     <!-- CPE Dictionary Menu -->
     <menuitem
         id="menu_cpe_management"
@@ -74,16 +84,44 @@
 
     <menuitem
         id="menu_cpe_dictionary"
-        name="CPE Dictionary"
+        name="📖 CPE Dictionary"
         parent="menu_cpe_management"
         action="action_cpe_dictionary_list"
         sequence="10"/>
 
     <menuitem
+        id="menu_cpe_vendors"
+        name="🏢 CPE Vendors"
+        parent="menu_cpe_management"
+        action="action_cpe_vendor"
+        sequence="15"/>
+
+    <menuitem
+        id="menu_cpe_products"
+        name="📦 CPE Products"
+        parent="menu_cpe_management"
+        action="action_cpe_product"
+        sequence="20"/>
+
+    <menuitem
         id="menu_cpe_matches"
-        name="CPE Matches"
+        name="🔗 CPE Matches"
         parent="menu_cpe_management"
         action="action_cpe_matches_list"
         sequence="20"/>
+
+    <menuitem
+        id="menu_cpe_api_connectors"
+        name="⚙️ API Connectors"
+        parent="menu_cpe_management"
+        action="action_vuln_fw_nvd_cpe_api_connector"
+        sequence="23"/>
+
+    <menuitem
+        id="menu_cpe_receiver_cpe23"
+        name="📥 CPE 2.3 Receivers"
+        parent="menu_cpe_management"
+        action="action_cpe_receiver_cpe23_list"
+        sequence="25"/>
 
 </odoo>

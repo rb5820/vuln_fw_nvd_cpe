@@ -2,15 +2,19 @@
 <odoo>
     <data noupdate="1">
         
-        <!-- Default CPE-focused NVD Connector -->
-        <record id="default_cpe_connector" model="vuln.fw.nvd.connector">
+         <!-- ============================================================ -->
+         <!-- Default CPE-focused NVD Connector Configuration              -->
+         <!-- This default Connector is designed to focus on CPE data processing and can be used as a template for users to create their own customized Connectors with similar settings. It is not tied to a specific vulnerability framework, allowing it to be used in various contexts. -->
+        
+        <!-- Default CPE-focused National Vulnerability Database Connector -->
+        <!-- <record id="default_cpe_connector" model="vuln.fw.nvd.connector">
             <field name="name">CPE Dictionary Connector</field>
             <field name="enable_cpe_processing" eval="True"/>
             <field name="auto_create_cpe_dictionary" eval="True"/>
             <field name="cpe_confidence_threshold" eval="0.8"/>
             <field name="batch_size" eval="50"/>
             <field name="active" eval="True"/>
-        </record>
+        </record> -->
         
     </data>
 </odoo>

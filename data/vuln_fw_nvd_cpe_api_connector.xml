@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- CPE API Connector: Default -->
+        <record id="vuln_fw_nvd_cpe_api_connector_default" model="vuln.fw.nvd.cpe.api.connector">
+            <field name="name">CPE Dictionary - Default Sync</field>
+            <field name="api_url">https://services.nvd.nist.gov/rest/json</field>
+            <field name="cpe_api_url">https://services.nvd.nist.gov/rest/json/cpes/2.0</field>
+            <field name="api_key"></field>
+            <field name="batch_size">100</field>
+            <field name="enable_cpe_processing">True</field>
+            <field name="auto_create_cpe_dictionary">True</field>
+            <field name="full_cpe_sync_active">False</field>
+            <field name="cpe_follows_cve_creation_active">True</field>
+            <field name="cpe_confidence_threshold">0.7</field>
+            <field name="auto_sync">False</field>
+            <field name="active">True</field>
+            <field name="connector_active">False</field>
+        </record>
+
+        <!-- CPE API Connector: Full Sync -->
+        <record id="vuln_fw_nvd_cpe_api_connector_full" model="vuln.fw.nvd.cpe.api.connector">
+            <field name="name">CPE Dictionary - Full Sync</field>
+            <field name="api_url">https://services.nvd.nist.gov/rest/json</field>
+            <field name="cpe_api_url">https://services.nvd.nist.gov/rest/json/cpes/2.0</field>
+            <field name="api_key"></field>
+            <field name="batch_size">500</field>
+            <field name="enable_cpe_processing">True</field>
+            <field name="auto_create_cpe_dictionary">True</field>
+            <field name="full_cpe_sync_active">True</field>
+            <field name="cpe_follows_cve_creation_active">False</field>
+            <field name="cpe_confidence_threshold">0.7</field>
+            <field name="auto_sync">False</field>
+            <field name="active">True</field>
+            <field name="connector_active">False</field>
+        </record>
+
+        <!-- CPE API Connector: Vendor Specific (Microsoft) -->
+        <record id="vuln_fw_nvd_cpe_api_connector_microsoft" model="vuln.fw.nvd.cpe.api.connector">
+            <field name="name">CPE Dictionary - Microsoft Products</field>
+            <field name="api_url">https://services.nvd.nist.gov/rest/json</field>
+            <field name="cpe_api_url">https://services.nvd.nist.gov/rest/json/cpes/2.0</field>
+            <field name="api_key"></field>
+            <field name="batch_size">100</field>
+            <field name="enable_cpe_processing">True</field>
+            <field name="auto_create_cpe_dictionary">True</field>
+            <field name="full_cpe_sync_active">True</field>
+            <field name="cpe_follows_cve_creation_active">False</field>
+            <field name="cpe_confidence_threshold">0.7</field>
+            <field name="selected_vendors">microsoft</field>
+            <field name="auto_sync">False</field>
+            <field name="active">True</field>
+            <field name="connector_active">False</field>
+        </record>
+
+        <!-- CPE API Connector: Vendor Specific (Linux) -->
+        <record id="vuln_fw_nvd_cpe_api_connector_linux" model="vuln.fw.nvd.cpe.api.connector">
+            <field name="name">CPE Dictionary - Linux Distributions</field>
+            <field name="api_url">https://services.nvd.nist.gov/rest/json</field>
+            <field name="batch_size">100</field>
+            <field name="enable_cpe_processing">True</field>
+            <field name="auto_create_cpe_dictionary">True</field>
+            <field name="full_cpe_sync_active">True</field>
+            <field name="cpe_follows_cve_creation_active">False</field>
+            <field name="cpe_confidence_threshold">0.7</field>
+            <field name="selected_vendors">redhat
+debian
+ubuntu
+canonical
+suse
+fedora</field>
+            <field name="auto_sync">False</field>
+            <field name="active">True</field>
+            <field name="connector_active">False</field>
+        </record>
+
+        <!-- CPE API Connector: Debug -->
+        <record id="vuln_fw_nvd_cpe_api_connector_debug" model="vuln.fw.nvd.cpe.api.connector">
+            <field name="name">CPE Dictionary - Debug (Small Batches)</field>
+            <field name="api_url">https://services.nvd.nist.gov/rest/json</field>
+            <field name="cpe_api_url">https://services.nvd.nist.gov/rest/json/cpes/2.0</field>
+            <field name="batch_size">10</field>
+            <field name="enable_cpe_processing">True</field>
+            <field name="auto_create_cpe_dictionary">True</field>
+            <field name="full_cpe_sync_active">False</field>
+            <field name="cpe_follows_cve_creation_active">True</field>
+            <field name="cpe_confidence_threshold">0.5</field>
+            <field name="auto_sync">False</field>
+            <field name="active">True</field>
+            <field name="connector_active">False</field>
+        </record>
+
+    </data>
+</odoo>

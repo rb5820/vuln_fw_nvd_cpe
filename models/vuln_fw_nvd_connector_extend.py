@@ -236,7 +236,24 @@ class VulnFwNvdCpeConnectorExtension(models.Model):
         import requests
         
         # Test API availability
-        response = requests.get(base_url, params=params, headers=headers, timeout=30)
+        _logger.info("Making CPE API request to: %s", base_url)
+        _logger.debug("Request params: %s", params)
+        _logger.debug("Request headers (without key): %s", {k: v for k, v in headers.items() if k != 'apiKey'})
+        
+        try:
+            response = requests.get(base_url, params=params, headers=headers, timeout=30)
+            _logger.info("CPE API response status: %s", response.status_code)
+            _logger.debug("Response headers: %s", dict(response.headers))
+            _logger.debug("Response content length: %s bytes", len(response.content))
+        except requests.Timeout as e:
+            _logger.error("CPE API request timeout after 30 seconds: %s", str(e))
+            raise Exception("NVD CPE API request timed out")
+        except requests.ConnectionError as e:
+            _logger.error("CPE API connection error: %s", str(e))
+            raise Exception("Failed to connect to NVD CPE API")
+        except requests.RequestException as e:
+            _logger.error("CPE API request error: %s", str(e))
+            raise Exception(f"NVD CPE API request failed: {str(e)}")
         
         if response.status_code == 404:
             _logger.warning("NVD CPE API endpoint not available")
@@ -246,17 +263,40 @@ class VulnFwNvdCpeConnectorExtension(models.Model):
         
         # Process API response (CPE 2.0 format)
         data = response.json()
-        cpe_items = data.get('result', {}).get('cpes', [])
-        total_results = data.get('totalResults', 0)
+        _logger.debug("CPE API response keys: %s", list(data.keys()))
+        _logger.debug("CPE API response structure: %s", {k: type(v).__name__ for k, v in data.items()})
+        
+        # Check for 'products' key (CPE API 2.0 uses 'products' not 'result')
+        if 'products' in data:
+            cpe_items = data.get('products', [])
+            total_results = data.get('totalResults', 0)
+            _logger.debug("Found 'products' key with %s items", len(cpe_items))
+        elif 'result' in data:
+            cpe_items = data.get('result', {}).get('cpes', [])
+            total_results = data.get('totalResults', 0)
+            _logger.debug("Found 'result' key with %s items", len(cpe_items))
+        else:
+            cpe_items = []
+            total_results = 0
+            _logger.warning("No 'products' or 'result' key in response. Available keys: %s", list(data.keys()))
         
         _logger.info("Received %s CPE items from NVD API (total available: %s)", 
                     len(cpe_items), total_results)
         
-        for cpe_item in cpe_items:
+        for idx, cpe_item in enumerate(cpe_items):
+            if idx == 0:
+                _logger.debug("First CPE item structure: %s", list(cpe_item.keys()))
+            
             cpe_data = cpe_item.get('cpe', {})
-            cpe_name = cpe_data.get('cpeName', '')
+            if not cpe_data and 'cpe' not in cpe_item:
+                # CPE might be at root level
+                cpe_data = cpe_item
+                _logger.debug("CPE data at root level for item %s", idx)
+            
+            cpe_name = cpe_data.get('cpeName', '') or cpe_data.get('cpe23Uri', '') or cpe_data.get('name', '')
             
             if not cpe_name:
+                _logger.debug("No CPE name found in item %s. Keys: %s", idx, list(cpe_data.keys()))
                 continue
             
             # Check if CPE exists

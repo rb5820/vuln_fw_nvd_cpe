@@ -99,6 +99,23 @@ class VulnFwNvdCpeDictionary(models.Model):
         help='Other qualifying information'
     )
     
+    # === VENDOR AND PRODUCT RELATIONSHIPS ===
+    vendor_id = fields.Many2one(
+        'vuln.fw.nvd.cpe.vendor',
+        string='CPE Vendor',
+        index=True,
+        ondelete='restrict',
+        help='Normalized vendor from CPE entry'
+    )
+    
+    product_id = fields.Many2one(
+        'vuln.fw.nvd.cpe.product',
+        string='CPE Product',
+        index=True,
+        ondelete='restrict',
+        help='Normalized product from CPE entry'
+    )
+    
     # Metadata
     deprecated = fields.Boolean(
         string='Deprecated',

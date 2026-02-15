@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Cisco Vendor -->
+        <record id="vuln_fw_nvd_cpe_vendor_cisco" model="vuln.fw.nvd.cpe.vendor">
+            <field name="name">cisco</field>
+            <field name="custom_name">Cisco Systems</field>
+            <field name="description">Cisco Systems, Inc. - Networking hardware, telecommunications equipment, and security solutions.</field>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- Microsoft Vendor -->
+        <record id="vuln_fw_nvd_cpe_vendor_microsoft" model="vuln.fw.nvd.cpe.vendor">
+            <field name="name">microsoft</field>
+            <field name="custom_name">Microsoft Corporation</field>
+            <field name="description">Microsoft Corporation - Software, hardware, and cloud services.</field>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- F5 Networks Vendor -->
+        <record id="vuln_fw_nvd_cpe_vendor_f5" model="vuln.fw.nvd.cpe.vendor">
+            <field name="name">f5</field>
+            <field name="custom_name">F5 Networks</field>
+            <field name="description">F5 Networks (formerly F5 Inc.) - Application delivery networking, security, and application services.</field>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- Apache Software Foundation -->
+        <record id="vuln_fw_nvd_cpe_vendor_apache" model="vuln.fw.nvd.cpe.vendor">
+            <field name="name">apache</field>
+            <field name="custom_name">Apache Software Foundation</field>
+            <field name="description">The Apache Software Foundation - Open source software projects.</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Odoo Vendor & related Technologies-->
+        <record id="vuln_fw_nvd_cpe_vendor_odoo" model="vuln.fw.nvd.cpe.vendor">
+            <field name="name">odoo</field>
+            <field name="custom_name">Odoo S.A.</field>
+            <field name="description">Odoo S.A. - Open source ERP and business applications.</field>
+            <field name="active" eval="True"/>
+        </record>
+        
+        <!-- Python Vendor -->
+        <record id="vuln_fw_nvd_cpe_vendor_python" model="vuln.fw.nvd.cpe.vendor">
+            <field name="name">python</field>
+            <field name="custom_name">Python Software Foundation</field>
+            <field name="description">Python Software Foundation - Python programming language and related software.</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- PostgreSQL Vendor -->
+        <record id="vuln_fw_nvd_cpe_vendor_postgresql" model="vuln.fw.nvd.cpe.vendor">
+            <field name="name">postgresql</field>
+            <field name="custom_name">PostgreSQL Global Development Group</field>
+            <field name="description">PostgreSQL Global Development Group - PostgreSQL open source relational database.</field>
+            <field name="active" eval="True"/>
+        </record>
+        
+
+        
+    </data>
+</odoo>

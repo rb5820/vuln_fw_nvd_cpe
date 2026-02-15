@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- CPE Vendor Form View -->
+    <record id="view_cpe_vendor_form" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.vendor.form</field>
+        <field name="model">vuln.fw.nvd.cpe.vendor</field>
+        <field name="arch" type="xml">
+            <form string="CPE Vendor">
+                <header>
+                    <button name="action_sync_from_nvd" type="object" string="Sync from NVD" class="oe_highlight" icon="fa-cloud-download" help="Retrieve vendor data and products from NVD API"/>
+                    <field name="debug_mode" string="Debug Mode" widget="boolean_toggle" options="{'autosave': True}"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_cpe_entries" type="object" class="oe_stat_button" icon="fa-list">
+                            <field name="cpe_count" widget="statinfo" string="CPE Entries"/>
+                        </button>
+                        <button name="action_view_products" type="object" class="oe_stat_button" icon="fa-cube">
+                            <field name="product_count" widget="statinfo" string="Products"/>
+                        </button>
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    
+                    <div class="oe_title">
+                        <label for="name" string="NVD Vendor Name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Vendor name from NVD (e.g., microsoft, adobe)"/>
+                        </h1>
+                        <label for="custom_name" string="Custom Name" class="oe_edit_only"/>
+                        <h2>
+                            <field name="custom_name" placeholder="Your custom vendor name (e.g., Microsoft Corporation)" class="oe_inline"/>
+                        </h2>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="display_name"/>
+                            <field name="website" widget="url" placeholder="https://vendor-website.com"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="vulnerability_count" readonly="1"/>
+                            <field name="nvd_last_sync" readonly="1"/>
+                            <field name="nvd_product_count" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="📝 Description">
+                            <field name="description" placeholder="Vendor description and additional information..."/>
+                        </page>
+                        <page string="🔗 References">
+                            <field name="reference_ids">
+                                <list>
+                                    <field name="url" widget="url"/>
+                                    <field name="ref_type"/>
+                                    <field name="entity_name"/>
+                                    <field name="status"/>
+                                    <field name="usage_count"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="📖 CPE Entries">
+                            <field name="cpe_dictionary_ids" readonly="1">
+                                <list>
+                                    <field name="cpe_name"/>
+                                    <field name="title"/>
+                                    <field name="version"/>
+                                    <field name="deprecated"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="📦 Products">
+                            <field name="product_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="version"/>
+                                    <field name="cpe_part"/>
+                                    <field name="cpe_count"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    
+    <!-- CPE Vendor List View -->
+    <record id="view_cpe_vendor_list" model="ir.ui.view">
+        <field name="name">vuln.fw.nvd.cpe.vendor.list</field>
+        <field name="model">vuln.fw.nvd.cpe.vendor</field>
+        <field name="arch" type="xml">
+            <list string="CPE Vendors">
+                <field name="name"/>
+                <field name="custom_name"/>
+                <field name="display_name"/>
+                <field name="cpe_count"/>
+                <field name="product_count"/>
+                <field name="nvd_product_count"/>
+                <field name="nvd_last_sync"/>
+                <field name="vulnerability_count"/>
+                <field name="website" widget="url"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- CPE Vendor Action -->
+    <record id="action_cpe_vendor" model="ir.actions.act_window">
+        <field name="name">CPE Vendors</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">vuln.fw.nvd.cpe.vendor</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+
+</odoo>
