@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <form string="CPE Product">
                 <header>
+                    <button name="action_add_to_dictionary" type="object" string="➕ Add to CPE Dictionary" class="oe_highlight" icon="fa-plus-circle" help="Create a CPE Dictionary entry from this product"/>
                     <button name="action_query_nvd_cpe_api" type="object" string="Sync from NVD" class="oe_highlight" icon="fa-cloud-download" help="Query NVD API for this product" invisible="not cpe_uri"/>
                     <button name="action_build_cpe_uri" string="Build CPE URI" type="object" class="btn-primary"/>
                     <button name="toggle_debug_mode" type="object" string="🐛 Debug Mode" class="btn-warning" icon="fa-bug"/>
@@ -22,6 +23,12 @@
                         </button>
                         <button class="oe_stat_button" icon="fa-sitemap" invisible="not child_ids">
                             <field name="child_ids" widget="statinfo" string="Child Versions"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-microchip" invisible="cpe_part != 'o' or runs_on_count == 0">
+                            <field name="runs_on_count" widget="statinfo" string="Runs On"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-code" invisible="cpe_part != 'h' or firmware_count == 0">
+                            <field name="firmware_count" widget="statinfo" string="Firmware"/>
                         </button>
                         <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
                             <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
@@ -122,7 +129,7 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="📖 CPE Dictionary Entries">
+                        <page string=" CPE Dictionary Entries">
                             <field name="cpe_dictionary_ids" readonly="1">
                                 <list>
                                     <field name="cpe_name"/>
@@ -143,6 +150,32 @@
                                     <field name="cpe_count"/>
                                 </list>
                             </field>
+                        </page>
+                        <page string="🖥️ Runs On Hardware" invisible="cpe_part != 'o'" name="runs_on_hardware">
+                            <group>
+                                <field name="runs_on_hardware_ids" nolabel="1">
+                                    <list>
+                                        <field name="vendor_id"/>
+                                        <field name="name"/>
+                                        <field name="version"/>
+                                        <field name="cpe_uri"/>
+                                        <field name="category"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
+                        <page string="💾 Compatible Firmware" invisible="cpe_part != 'h'" name="compatible_firmware">
+                            <group>
+                                <field name="firmware_ids" nolabel="1">
+                                    <list>
+                                        <field name="vendor_id"/>
+                                        <field name="name"/>
+                                        <field name="version"/>
+                                        <field name="cpe_uri"/>
+                                        <field name="category"/>
+                                    </list>
+                                </field>
+                            </group>
                         </page>
                         <page string="🧪 Manual CPE Test" name="manual_test">
                             <group>

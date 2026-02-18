@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-"""CPE (Common Platform Enumeration) models for NVD integration"""
+"""CPE (Common Platform Enumeration) Dictionary - CPE Module Extensions
+This module inherits the base CPE dictionary from vuln_fw_nvd and adds:
+- Full CPE API synchronization
+- Vendor and product relationship management
+- References and deprecation tracking
+- Advanced search and matching capabilities
+"""
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 import re
@@ -11,93 +17,23 @@ _logger = logging.getLogger(__name__)
 
 
 class VulnFwNvdCpeDictionary(models.Model):
-    """CPE Dictionary entries from NIST CPE Dictionary"""
-    _name = 'vuln.fw.nvd.cpe.dictionary'
-    _description = 'CPE Dictionary Entry'
-    _inherit = ['mail.thread']
-    _order = 'cpe_name'
-    _rec_name = 'title'
-
-    # Basic CPE Information
-    cpe_name = fields.Char(
-        string='CPE Name',
-        required=True,
-        index=True,
-        help='CPE 2.3 formatted name (e.g., cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*)'
-    )
+    """CPE Dictionary entries with full CPE module functionality
     
-    cpe_name_id = fields.Char(
-        string='CPE Name ID',
-        index=True,
-        help='Unique CPE identifier from NIST'
-    )
+    Inherits base CPE dictionary from vuln_fw_nvd and extends it with:
+    - NVD API synchronization
+    - Vendor/product relationships
+    - Reference management
+    - Deprecation tracking
+    - Match counting and statistics
+    """
+    _inherit = 'vuln.fw.nvd.cpe.dictionary'
+    _description = 'CPE Dictionary Entry (CPE Module)'
+    # Add mail tracking for audit trail
+    _inherits_inherit = ['mail.thread']
     
-    title = fields.Char(
-        string='Title',
-        required=True,
-        help='Human-readable title for the CPE entry'
-    )
-    
-    # Parsed CPE Components
-    part = fields.Selection([
-        ('a', 'Application'),
-        ('h', 'Hardware'),
-        ('o', 'Operating System')
-    ], string='Part', required=True, help='CPE part component')
-    
-    vendor = fields.Char(
-        string='Vendor',
-        required=True,
-        index=True,
-        help='Vendor or manufacturer name'
-    )
-    
-    product = fields.Char(
-        string='Product',
-        required=True,
-        index=True,
-        help='Product name'
-    )
-    
-    version = fields.Char(
-        string='Version',
-        help='Product version'
-    )
-    
-    update_component = fields.Char(
-        string='Update',
-        help='Update or patch level'
-    )
-    
-    edition = fields.Char(
-        string='Edition',
-        help='Product edition'
-    )
-    
-    language = fields.Char(
-        string='Language',
-        help='Language localization'
-    )
-    
-    sw_edition = fields.Char(
-        string='Software Edition',
-        help='Software edition (CPE 2.3)'
-    )
-    
-    target_sw = fields.Char(
-        string='Target Software',
-        help='Target software environment'
-    )
-    
-    target_hw = fields.Char(
-        string='Target Hardware',
-        help='Target hardware platform'
-    )
-    
-    other = fields.Char(
-        string='Other',
-        help='Other qualifying information'
-    )
+    # === CPE MODULE EXTENSIONS ===
+    # Note: Core CPE fields (cpe_name, title, part, vendor, product, version, etc.)
+    # are inherited from the base vuln_fw_nvd_cpe_dictionary model
     
     # === VENDOR AND PRODUCT RELATIONSHIPS ===
     vendor_id = fields.Many2one(
@@ -116,17 +52,24 @@ class VulnFwNvdCpeDictionary(models.Model):
         help='Normalized product from CPE entry'
     )
     
-    # Metadata
-    deprecated = fields.Boolean(
-        string='Deprecated',
-        default=False,
-        help='Whether this CPE entry is deprecated'
+    # Override base vendor/product to link with CPE plugin entities
+    vendor = fields.Char(
+        related='vendor_id.name',
+        string='Vendor',
+        store=True,
+        readonly=False,
+        help='Vendor or manufacturer name (linked to CPE Vendor)'
     )
     
-    deprecated_date = fields.Datetime(
-        string='Deprecated Date',
-        help='Date when this CPE was deprecated'
+    product = fields.Char(
+        related='product_id.name',
+        string='Product',
+        store=True,
+        readonly=False,
+        help='Product name (linked to CPE Product)'
     )
+    
+    # === CPE MODULE ADDITIONAL FIELDS ===
     
     deprecated_by = fields.Many2one(
         'vuln.fw.nvd.cpe.dictionary',
@@ -134,25 +77,13 @@ class VulnFwNvdCpeDictionary(models.Model):
         help='CPE entry that replaces this deprecated one'
     )
     
-    # References and Links
+    # References and Links (CPE specific)
     references = fields.Text(
         string='References',
         help='JSON array of reference URLs and descriptions'
     )
     
-    # Sync Information
-    last_modified = fields.Datetime(
-        string='Last Modified',
-        help='Last modification timestamp from NIST'
-    )
-    
-    sync_date = fields.Datetime(
-        string='Sync Date',
-        default=fields.Datetime.now,
-        help='Date when this CPE was last synchronized'
-    )
-    
-    # Statistics and Usage
+    # === STATISTICS AND USAGE (CPE Module specific) ===
     vulnerability_count = fields.Integer(
         string='Vulnerabilities',
         compute='_compute_vulnerability_count',
@@ -165,20 +96,14 @@ class VulnFwNvdCpeDictionary(models.Model):
         help='Number of active CPE matches using this entry'
     )
     
-    # Search and Indexing
-    search_text = fields.Text(
-        string='Search Text',
-        compute='_compute_search_text',
-        store=True,
-        help='Searchable text combining all CPE components'
-    )
-    
+    # === SEARCH AND CATEGORIZATION ===
     tags = fields.Char(
         string='Tags',
         help='Comma-separated tags for categorization'
     )
     
-    @api.depends('cpe_name', 'title', 'vendor', 'product', 'version')
+    # Override inherited search_text to include tags
+    @api.depends('cpe_name', 'title', 'vendor', 'product', 'version', 'tags')
     def _compute_search_text(self):
         """Compute searchable text for full-text search"""
         for record in self:
@@ -191,6 +116,20 @@ class VulnFwNvdCpeDictionary(models.Model):
                 record.tags or ''
             ]
             record.search_text = ' '.join([p.lower() for p in parts if p])
+    
+    def _format_display_version(self):
+        """Format version string with CPE-specific enhancements (tags)
+        
+        Extends parent implementation by adding tags if present.
+        Calls parent to get base formatting, then appends tags.
+        
+        Returns:
+            str: Formatted display string with optional tags
+        """
+        base_name = super()._format_display_version()
+        if self.tags:
+            return f"{base_name} [{self.tags}]"
+        return base_name
     
     def _compute_vulnerability_count(self):
         """Count vulnerabilities referencing this CPE"""
@@ -228,11 +167,24 @@ class VulnFwNvdCpeDictionary(models.Model):
     
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create to parse CPE components"""
+        """Override create to parse CPE components and create versioned products"""
         for vals in vals_list:
             if 'cpe_name' in vals:
                 parsed = self._parse_cpe_name(vals['cpe_name'])
                 vals.update(parsed)
+                
+                # Create versioned product hierarchy if vendor/product/version present
+                if parsed.get('vendor') and parsed.get('product'):
+                    product_id = self._get_or_create_versioned_product(
+                        vendor_name=parsed.get('vendor'),
+                        product_name=parsed.get('product'),
+                        version=parsed.get('version'),
+                        part=parsed.get('part'),
+                        cpe_part=vals.get('part', 'a')
+                    )
+                    if product_id:
+                        vals['product_id'] = product_id
+        
         return super().create(vals_list)
     
     def write(self, vals):
@@ -266,7 +218,17 @@ class VulnFwNvdCpeDictionary(models.Model):
         }
     
     def _decode_cpe_component(self, component):
-        """Decode CPE component (handle wildcards and escaping)"""
+        r"""Decode CPE component (handle wildcards and escaping)
+        
+        CPE 2.3 escape sequences (RFC 5849):
+        - \: = literal colon
+        - \- = literal hyphen
+        - \! = literal exclamation mark
+        - \* = literal asterisk
+        - \. = literal period
+        - \& = literal ampersand
+        - \\ = literal backslash
+        """
         if not component or component == '*':
             return False
         
@@ -274,11 +236,110 @@ class VulnFwNvdCpeDictionary(models.Model):
         import urllib.parse
         decoded = urllib.parse.unquote(component)
         
-        # Handle CPE-specific escaping
+        # Handle CPE 2.3 escape sequences (RFC 5849)
+        # Must handle \\ first to avoid double-unescaping
+        decoded = decoded.replace('\\\\', '\x00')  # Temporary placeholder
         decoded = decoded.replace('\\:', ':')
-        decoded = decoded.replace('\\\\', '\\')
+        decoded = decoded.replace('\\-', '-')
+        decoded = decoded.replace('\\!', '!')
+        decoded = decoded.replace('\\*', '*')
+        decoded = decoded.replace('\\.', '.')
+        decoded = decoded.replace('\\&', '&')
+        decoded = decoded.replace('\x00', '\\')  # Restore backslashes
         
         return decoded if decoded else False
+    
+    def _get_or_create_versioned_product(self, vendor_name, product_name, version=None, part=None, cpe_part='a'):
+        """Get or create versioned product with parent-child hierarchy
+        
+        When CPE module is installed, this creates a product hierarchy for versioned entries.
+        For version "13.0.1.180", creates:
+        - Product: backup_and_replication (root, version_level=0)
+        - Product: backup_and_replication v13 (version_level=1, parent=root)
+        - Product: backup_and_replication v13.0 (version_level=2, parent=v13)
+        - Product: backup_and_replication v13.0.1 (version_level=3, parent=v13.0)
+        - Product: backup_and_replication v13.0.1.180 (version_level=4, parent=v13.0.1)
+        
+        Returns: Product ID for linking in CPE dictionary
+        """
+        try:
+            product_model = self.env['vuln.fw.nvd.cpe.product']
+            
+            # Get or create vendor
+            vendor_model = self.env['vuln.fw.nvd.cpe.vendor']
+            vendor = vendor_model.search([('name', '=', vendor_name)], limit=1)
+            if not vendor:
+                vendor = vendor_model.create({'name': vendor_name})
+                _logger.info("🏢 Created vendor: %s", vendor_name)
+            
+            # Get or create root product (without version)
+            root_product = product_model.search([
+                ('vendor_id', '=', vendor.id),
+                ('name', '=', product_name),
+                ('version', '=', False)
+            ], limit=1)
+            
+            if not root_product:
+                root_product = product_model.create({
+                    'vendor_id': vendor.id,
+                    'name': product_name,
+                    'version': False,
+                    'cpe_part': cpe_part,
+                    'category': self._map_part_to_category(cpe_part),
+                    'description': _('Root product entry from NVD CPE dictionary'),
+                })
+                _logger.info("🌳 Created root product: %s (ID: %s)", product_name, root_product.id)
+            
+            # If no version specified, return root
+            if not version or version == '*':
+                _logger.debug("📌 No version specified, returning root product ID: %s", root_product.id)
+                return root_product.id
+            
+            # Create version hierarchy using product's built-in method
+            _logger.info("🔗 Creating version hierarchy for v%s...", version)
+            parent_id = root_product._get_or_create_version_parent(version)
+            
+            # Get or create the leaf version product
+            leaf_product = product_model.search([
+                ('vendor_id', '=', vendor.id),
+                ('name', '=', product_name),
+                ('version', '=', version)
+            ], limit=1)
+            
+            if not leaf_product:
+                leaf_product = product_model.create({
+                    'vendor_id': vendor.id,
+                    'name': product_name,
+                    'version': version,
+                    'cpe_part': cpe_part,
+                    'category': self._map_part_to_category(cpe_part),
+                    'parent_id': parent_id,
+                    'description': _('Product entry from NVD CPE dictionary'),
+                })
+                _logger.info("✅ Created versioned product: %s v%s (ID: %s, parent_id: %s)", 
+                           product_name, version, leaf_product.id, parent_id)
+            else:
+                _logger.debug("📌 Using existing versioned product: %s v%s (ID: %s)", 
+                            product_name, version, leaf_product.id)
+                if leaf_product.parent_id.id != parent_id:
+                    leaf_product.parent_id = parent_id
+                    _logger.info("🔄 Updated parent for existing product %s v%s", product_name, version)
+            
+            return leaf_product.id
+            
+        except Exception as e:
+            _logger.error("❌ Error creating versioned product for %s %s v%s: %s", 
+                        vendor_name, product_name, version, str(e), exc_info=True)
+            return False
+    
+    def _map_part_to_category(self, cpe_part):
+        """Map CPE part to product category"""
+        category_map = {
+            'a': 'application',
+            'h': 'hardware',
+            'o': 'operating_system'
+        }
+        return category_map.get(cpe_part, 'application')
     
     @api.model
     def search_cpe(self, query, limit=50):
@@ -347,6 +408,23 @@ class VulnFwNvdCpeDictionary(models.Model):
         """Refresh CPE dictionary from NIST (called by cron)"""
         _logger.info("Starting CPE dictionary refresh from NIST")
         
+        # Check if any active CPE connectors exist (both child AND parent must be active)
+        active_connector = None
+        child_connectors = self.env['vuln.fw.nvd.cpe.api.connector'].search([
+            ('active', '=', True),
+            ('connector_active', '=', True)
+        ])
+        
+        for connector in child_connectors:
+            if connector.parent_connector_id and connector.parent_connector_id.active and connector.parent_connector_id.connector_active:
+                active_connector = connector
+                break
+        
+        if not active_connector:
+            _logger.warning("⚠️  No active CPE connectors found - skipping dictionary refresh")
+            _logger.warning("   Requires: Child connector AND parent connector both have connector_active=True")
+            return
+        
         try:
             # This would implement the actual NIST CPE API integration
             # For now, we'll log that the refresh was triggered
@@ -377,6 +455,23 @@ class VulnFwNvdCpeDictionary(models.Model):
     def update_cpe_statistics(self):
         """Update CPE usage statistics (called by cron)"""
         _logger.info("Updating CPE statistics")
+        
+        # Check if any active CPE connectors exist (both child AND parent must be active)
+        active_connector = None
+        child_connectors = self.env['vuln.fw.nvd.cpe.api.connector'].search([
+            ('active', '=', True),
+            ('connector_active', '=', True)
+        ])
+        
+        for connector in child_connectors:
+            if connector.parent_connector_id and connector.parent_connector_id.active and connector.parent_connector_id.connector_active:
+                active_connector = connector
+                break
+        
+        if not active_connector:
+            _logger.warning("⚠️  No active CPE connectors found - skipping statistics update")
+            _logger.warning("   Requires: Child connector AND parent connector both have connector_active=True")
+            return
         
         # Force recomputation of computed fields
         all_cpes = self.search([])
@@ -663,6 +758,23 @@ class VulnFwNvdCpeMatch(models.Model):
     def cleanup_stale_matches(self):
         """Clean up stale CPE matches (called by cron)"""
         _logger.info("Cleaning up stale CPE matches")
+        
+        # Check if any active CPE connectors exist (both child AND parent must be active)
+        active_connector = None
+        child_connectors = self.env['vuln.fw.nvd.cpe.api.connector'].search([
+            ('active', '=', True),
+            ('connector_active', '=', True)
+        ])
+        
+        for connector in child_connectors:
+            if connector.parent_connector_id and connector.parent_connector_id.active and connector.parent_connector_id.connector_active:
+                active_connector = connector
+                break
+        
+        if not active_connector:
+            _logger.warning("⚠️  No active CPE connectors found - skipping stale match cleanup")
+            _logger.warning("   Requires: Child connector AND parent connector both have connector_active=True")
+            return
         
         # Find matches with non-existent assets
         stale_matches = []

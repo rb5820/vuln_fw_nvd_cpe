@@ -6,17 +6,19 @@
         <field name="model">vuln.fw.nvd.cpe.api.connector</field>
         <field name="arch" type="xml">
             <form string="Common Platform Enumeration API Thread">
-                <header>   
-                    <field name="active" string="Active" widget="boolean_toggle"/>
-                    <field name="connector_active" string="Connector Active" widget="boolean_toggle"/>
-                    <field name="debug_mode" string="Debug Mode" widget="boolean_toggle"/>
-                </header>
                 <sheet>
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Common Platform Enumeration API Thread Name"/>
                         </h1>
                     </div>
+                    <group>
+                        <group>
+                            <field name="active" string="Active" widget="boolean_toggle"/>
+                            <field name="connector_active" string="Connector Active" widget="boolean_toggle"/>
+                            <field name="debug_mode" string="Debug Mode" widget="boolean_toggle"/>
+                        </group>
+                    </group>
                     <group>
                         <group>
                             <field name="parent_connector_id" options="{'no_create': True}"/>

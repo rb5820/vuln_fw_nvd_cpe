@@ -438,42 +438,49 @@ class VulnFwNvdCpeApiConnector(models.Model):
                             if self.debug_mode:
                                 _logger.info(f"[DEBUG] ✅ Validation passed - both vendor and product found")
                             
-                            new_entry_vals = {
-                                'cpe_name': cpe_uri,
-                                'part': cpe_type,
-                                'vendor': vendor if vendor != '*' else '',
-                                'product': product if product != '*' else '',
-                                'version': version if version != '*' else '',
-                                'update_component': update if update != '*' else '',
-                                'edition': edition if edition != '*' else '',
-                                'language': language if language != '*' else '',
-                                'sw_edition': sw_edition if sw_edition != '*' else '',
-                                'target_sw': target_sw if target_sw != '*' else '',
-                                'target_hw': target_hw if target_hw != '*' else '',
-                                'other': other if other != '*' else '',
-                                'title': f"{product.replace('_', ' ').title()} {version if version != '*' else ''}".strip(),
-                                'deprecated': False,
-                                'vendor_id': vendor_record.id,
-                                'product_id': product_record.id,
-                            }
-                            
-                            if self.debug_mode:
-                                _logger.info(f"[DEBUG] 💾 Dictionary entry values: {new_entry_vals}")
-                            
-                            new_entry = CpeDict.create(new_entry_vals)
-                            
-                            if self.debug_mode:
-                                _logger.info(f"[DEBUG] ✨ Created dictionary entry ID: {new_entry.id}")
-                            
-                            log += f"✓ Created new dictionary entry (ID: {new_entry.id})\n"
-                            log += f"  ✅ Fully linked to vendor and product records\n"
-                        if self.debug_mode:
-                            log += f"  Record details: {new_entry_vals}\n"
-                        self.cpe_entries_created += 1
+                            # Initialize new_entry_vals to avoid scope errors
+                            new_entry_vals = {}
+                            try:
+                                new_entry_vals = {
+                                    'cpe_name': cpe_uri,
+                                    'part': cpe_type,
+                                    'vendor': vendor if vendor != '*' else '',
+                                    'product': product if product != '*' else '',
+                                    'version': version if version != '*' else '',
+                                    'update_component': update if update != '*' else '',
+                                    'edition': edition if edition != '*' else '',
+                                    'language': language if language != '*' else '',
+                                    'sw_edition': sw_edition if sw_edition != '*' else '',
+                                    'target_sw': target_sw if target_sw != '*' else '',
+                                    'target_hw': target_hw if target_hw != '*' else '',
+                                    'other': other if other != '*' else '',
+                                    'title': f"{product.replace('_', ' ').title()} {version if version != '*' else ''}".strip(),
+                                    'deprecated': False,
+                                    'vendor_id': vendor_record.id,
+                                    'product_id': product_record.id,
+                                }
+                                
+                                if self.debug_mode:
+                                    _logger.info(f"[DEBUG] 💾 Dictionary entry values: {new_entry_vals}")
+                                
+                                new_entry = CpeDict.create(new_entry_vals)
+                                
+                                if self.debug_mode:
+                                    _logger.info(f"[DEBUG] ✨ Created dictionary entry ID: {new_entry.id}")
+                                
+                                log += f"✓ Created new dictionary entry (ID: {new_entry.id})\n"
+                                log += f"  ✅ Fully linked to vendor and product records\n"
+                                if self.debug_mode:
+                                    log += f"  Record details: {new_entry_vals}\n"
+                                self.cpe_entries_created += 1
+                            except Exception as e:
+                                log += f"✗ Failed to create entry: {str(e)}\n"
+                                if self.debug_mode:
+                                    _logger.error(f"[DEBUG] Dictionary creation error: {str(e)}", exc_info=True)
                     except Exception as e:
-                        log += f"✗ Failed to create entry: {str(e)}\n"
+                        log += f"✗ Auto-create error: {str(e)}\n"
                         if self.debug_mode:
-                            _logger.error(f"[DEBUG] Dictionary creation error: {str(e)}", exc_info=True)
+                            _logger.error(f"[DEBUG] Auto-create error: {str(e)}", exc_info=True)
                 else:
                     log += "  (Auto-create disabled)\n"
             

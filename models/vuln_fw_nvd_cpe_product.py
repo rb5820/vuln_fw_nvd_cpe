@@ -2,6 +2,7 @@
 
 from odoo import api, fields, models, _
 import logging
+import json
 
 _logger = logging.getLogger(__name__)
 
@@ -229,6 +230,39 @@ class VulnFwNvdCpeProduct(models.Model):
         help='Reference URLs for this product'
     )
     
+    # === HARDWARE-FIRMWARE RELATIONSHIPS ===
+    runs_on_hardware_ids = fields.Many2many(
+        comodel_name='vuln.fw.nvd.cpe.product',
+        relation='vuln_fw_nvd_cpe_firmware_hardware_rel',
+        column1='firmware_id',
+        column2='hardware_id',
+        string='Runs On Hardware',
+        domain="[('cpe_part', '=', 'h')]",
+        help='Hardware products this firmware/OS runs on (for cpe_part=o)'
+    )
+    
+    firmware_ids = fields.Many2many(
+        comodel_name='vuln.fw.nvd.cpe.product',
+        relation='vuln_fw_nvd_cpe_firmware_hardware_rel',
+        column1='hardware_id',
+        column2='firmware_id',
+        string='Compatible Firmware',
+        domain="[('cpe_part', '=', 'o')]",
+        help='Firmware/OS that runs on this hardware (for cpe_part=h)'
+    )
+    
+    runs_on_count = fields.Integer(
+        string='Runs On Count',
+        compute='_compute_runs_on_count',
+        help='Number of hardware products this firmware runs on'
+    )
+    
+    firmware_count = fields.Integer(
+        string='Firmware Count',
+        compute='_compute_firmware_count',
+        help='Number of firmware/OS compatible with this hardware'
+    )
+    
     # === VERSION HIERARCHY ===
     parent_id = fields.Many2one(
         'vuln.fw.nvd.cpe.product',
@@ -299,7 +333,49 @@ class VulnFwNvdCpeProduct(models.Model):
             # This would be computed from vulnerability data if available
             record.vulnerability_count = 0
     
+    @api.depends('runs_on_hardware_ids')
+    def _compute_runs_on_count(self):
+        """Compute count of hardware products this firmware runs on."""
+        for record in self:
+            record.runs_on_count = len(record.runs_on_hardware_ids)
+    
+    @api.depends('firmware_ids')
+    def _compute_firmware_count(self):
+        """Compute count of firmware/OS compatible with this hardware."""
+        for record in self:
+            record.firmware_count = len(record.firmware_ids)
+    
     # _compute_match_count removed - match model doesn't link to products yet
+    
+    # === CVE MODULE INTEGRATION (OPTIONAL) ===
+    @api.model
+    def _cve_module_available(self):
+        """
+        Check if CVE module is installed and available.
+        Returns True if vuln_fw_nvd_cve module is installed.
+        """
+        try:
+            module = self.env['ir.module.module'].search([
+                ('name', '=', 'vuln_fw_nvd_cve'),
+                ('state', '=', 'installed')
+            ], limit=1)
+            return bool(module)
+        except Exception as e:
+            _logger.debug("Error checking CVE module availability: %s", str(e))
+            return False
+    
+    def _get_cve_enhancement_model(self):
+        """
+        Get CVE enhancement model if available.
+        Returns the model recordset or False if not available.
+        """
+        if self._cve_module_available():
+            try:
+                return self.env['vuln.fw.nvd.cve.enhancement']
+            except KeyError:
+                _logger.warning("CVE module installed but enhancement model not found")
+                return False
+        return False
     
     # === CONSTRAINTS ===
     _sql_constraints = [
@@ -409,7 +485,6 @@ class VulnFwNvdCpeProduct(models.Model):
                         product_vals['nvd_titles'] = json.dumps(titles)
                     
                     # Store references as JSON
-                    import json
                     refs = first_cpe.get('refs', [])
                     if refs:
                         product_vals['nvd_references'] = json.dumps(refs)
@@ -532,11 +607,110 @@ class VulnFwNvdCpeProduct(models.Model):
             'context': {'default_product_id': self.id}
         }
     
+    def action_view_cves(self):
+        """View all CVEs related to this product's CPE entries."""
+        self.ensure_one()
+        
+        # Collect all unique CVE IDs from CPE Dictionary entries
+        all_cves = self.env['vuln.fw.nvd.cve.enhancement']
+        for cpe_entry in self.cpe_dictionary_ids:
+            if hasattr(cpe_entry, 'cve_ids'):
+                all_cves |= cpe_entry.cve_ids
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('CVEs for %s', self.display_name),
+            'res_model': 'vuln.fw.nvd.cve.enhancement',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', all_cves.ids)],
+            'context': {
+                'search_default_group_by_severity': 1,
+            }
+        }
+    
+    def action_add_to_dictionary(self):
+        """Create a CPE Dictionary entry from this product."""
+        self.ensure_one()
+        
+        # Build CPE URI if not already built
+        if not self.cpe_uri:
+            self.cpe_uri = self._build_cpe_uri()
+        
+        # Check if dictionary entry already exists
+        existing = self.env['vuln.fw.nvd.cpe.dictionary'].search([
+            ('cpe_name', '=', self.cpe_uri),
+            ('product_id', '=', self.id)
+        ], limit=1)
+        
+        if existing:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Existing CPE Dictionary Entry'),
+                'res_model': 'vuln.fw.nvd.cpe.dictionary',
+                'res_id': existing.id,
+                'view_mode': 'form',
+                'target': 'current',
+            }
+        
+        # Create new dictionary entry
+        vals = {
+            'cpe_name': self.cpe_uri,
+            'title': self.title or f"{self.vendor_id.name} {self.name} {self.version or ''}".strip(),
+            'product_id': self.id,
+            'part': self.cpe_part,
+            'vendor': self.vendor_id.name,
+            'product': self.name,
+            'version': self.version or '*',
+            'update_component': self.cpe_update or '*',
+            'edition': self.cpe_edition or '*',
+            'language': self.cpe_language or '*',
+            'sw_edition': self.cpe_sw_edition or '*',
+            'target_sw': self.cpe_target_sw or '*',
+            'target_hw': self.cpe_target_hw or '*',
+            'other': self.cpe_other or '*',
+            'deprecated': self.deprecated,
+        }
+        
+        cpe_entry = self.env['vuln.fw.nvd.cpe.dictionary'].create(vals)
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('New CPE Dictionary Entry'),
+            'res_model': 'vuln.fw.nvd.cpe.dictionary',
+            'res_id': cpe_entry.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+    
     # action_view_matches removed - match model doesn't link to products yet
     
     # === CPE URI BUILDING METHODS ===
     def _encode_cpe_component(self, component, is_version=False):
-        """Encode CPE component according to CPE 2.3 specification."""
+        r"""Encode CPE component according to CPE 2.3 specification (RFC 5849).
+        
+        CPE 2.3 escape sequences:
+        - & → \&
+        - ! → \!
+        - " → \"
+        - * → \*
+        - + → \+
+        - , → \,
+        - : → \:
+        - ; → \;
+        - < → \<
+        - = → \=
+        - > → \>
+        - @ → \@
+        - [ → \[
+        - \ → \\
+        - ] → \]
+        - ^ → \^
+        - ` → \`
+        - { → \{
+        - | → \|
+        - } → \}
+        - ~ → \~
+        """
         if not component:
             return '*'
         
@@ -552,32 +726,33 @@ class VulnFwNvdCpeProduct(models.Model):
         if is_version and component_str == '*':
             return '-'
         
-        # Basic encoding - lowercase and replace problematic characters
+        # Lowercase and normalize spaces
         encoded = component_str.lower()
         encoded = encoded.replace(' ', '_')
-        encoded = encoded.replace('/', '_')
-        encoded = encoded.replace('\\', '_')
-        encoded = encoded.replace('(', '_')
-        encoded = encoded.replace(')', '_')
-        encoded = encoded.replace('[', '_')
-        encoded = encoded.replace(']', '_')
-        encoded = encoded.replace('{', '_')
-        encoded = encoded.replace('}', '_')
-        encoded = encoded.replace('<', '_')
-        encoded = encoded.replace('>', '_')
-        encoded = encoded.replace('"', '_')
-        encoded = encoded.replace("'", '_')
-        encoded = encoded.replace('&', '_')
-        encoded = encoded.replace('|', '_')
-        encoded = encoded.replace(';', '_')
-        encoded = encoded.replace('?', '_')
         
-        # Remove multiple underscores
-        while '__' in encoded:
-            encoded = encoded.replace('__', '_')
-        
-        # Remove leading/trailing underscores
-        encoded = encoded.strip('_')
+        # Escape CPE 2.3 special characters (RFC 5849)
+        # Must handle backslash first to avoid double-escaping
+        encoded = encoded.replace('\\', '\\\\')
+        encoded = encoded.replace('&', '\\&')
+        encoded = encoded.replace('!', '\\!')
+        encoded = encoded.replace('"', '\\"')
+        encoded = encoded.replace('*', '\\*')
+        encoded = encoded.replace('+', '\\+')
+        encoded = encoded.replace(',', '\\,')
+        encoded = encoded.replace(':', '\\:')
+        encoded = encoded.replace(';', '\\;')
+        encoded = encoded.replace('<', '\\<')
+        encoded = encoded.replace('=', '\\=')
+        encoded = encoded.replace('>', '\\>')
+        encoded = encoded.replace('@', '\\@')
+        encoded = encoded.replace('[', '\\[')
+        encoded = encoded.replace(']', '\\]')
+        encoded = encoded.replace('^', '\\^')
+        encoded = encoded.replace('`', '\\`')
+        encoded = encoded.replace('{', '\\{')
+        encoded = encoded.replace('|', '\\|')
+        encoded = encoded.replace('}', '\\}')
+        encoded = encoded.replace('~', '\\~')
         
         return encoded or '*'
     
@@ -759,13 +934,17 @@ class VulnFwNvdCpeProduct(models.Model):
         vendor_name = self.vendor_id.name.lower()
         product_name = self.name.lower()
         
-        _logger.info("Searching for related CPEs: vendor=%s, product=%s", vendor_name, product_name)
+        # Log CPE URI and search details
+        cpe_uri = self._build_cpe_uri()
+        _logger.info("🔍 Searching for related CPEs")
+        _logger.info("   CPE URI: %s", cpe_uri)
+        _logger.info("   Vendor: %s, Product: %s", vendor_name, product_name)
         
         # Build search domain for CPE dictionary - case-insensitive partial match
+        # Search for CPEs with matching vendor and product (linked or unlinked)
         domain = [
             ('vendor', '=ilike', f'%{vendor_name}%'),
             ('product', '=ilike', f'%{product_name}%'),
-            ('product_id', '=', False)  # Not yet linked to a product
         ]
         
         _logger.debug("Search domain: %s", domain)
@@ -775,9 +954,16 @@ class VulnFwNvdCpeProduct(models.Model):
         _logger.info("Found %d related CPE entries", len(related_cpes))
         
         if related_cpes:
-            # Link found CPEs to this product
-            related_cpes.write({'product_id': self.id})
-            _logger.info("Linked %d CPE entries to product %s", len(related_cpes), self.id)
+            # Separate unlinked and already-linked CPEs
+            unlinked_cpes = related_cpes.filtered(lambda cpe: not cpe.product_id)
+            linked_cpes = related_cpes.filtered(lambda cpe: cpe.product_id)
+            
+            if unlinked_cpes:
+                unlinked_cpes.write({'product_id': self.id})
+                _logger.info("✅ Linked %d unlinked CPE entries to product %s", len(unlinked_cpes), self.id)
+            
+            if linked_cpes:
+                _logger.info("ℹ️  %d CPE entries already linked to other products", len(linked_cpes))
             
             return {
                 'type': 'ir.actions.client',
@@ -931,10 +1117,9 @@ class VulnFwNvdCpeProduct(models.Model):
             try:
                 response_json = response.json()
                 if self.debug_mode:
-                    import json
                     _logger.info("📊 [PRODUCT DEBUG] Full Response JSON structure:")
                     _logger.info("📊 [PRODUCT DEBUG] Response keys: %s", list(response_json.keys()))
-                    _logger.info("📊 [PRODUCT DEBUG] Pretty-printed response:\n%s", json.dumps(response_json, indent=2))
+                    _logger.info("📊 [PRODUCT DEBUG] Response JSON (single line): %s", json.dumps(response_json))
             except Exception as json_err:
                 if self.debug_mode:
                     _logger.error("❌ [PRODUCT DEBUG] Failed to parse JSON response: %s", str(json_err))
@@ -1134,7 +1319,6 @@ class VulnFwNvdCpeProduct(models.Model):
                     _logger.info("🔗 [PRODUCT DEBUG] No references found in any of the %d CPE items", len(cpe_items))
                 
                 # Update NVD metadata
-                import json
                 if refs:
                     update_vals['nvd_references'] = json.dumps(refs)
                 
@@ -1307,7 +1491,6 @@ class VulnFwNvdCpeProduct(models.Model):
                     else:
                         # Create new version product with hierarchical parent
                         try:
-                            import json
                             from datetime import datetime
                             # Extract NVD metadata
                             nvd_cpe_id = cpe.get('cpeNameId', '')
@@ -1448,6 +1631,11 @@ class VulnFwNvdCpeProduct(models.Model):
                     'type': 'error'
                 }
             }
+    
+    # === HARDWARE-FIRMWARE RELATIONSHIP METHODS ===
+    # NOTE: Firmware-hardware relationships should be detected from NVD CVE data,
+    # not hardcoded. CVE configurations specify which firmware versions run on which hardware.
+    # This will be implemented when CVE module is integrated.
     
     # === AUTO-BUILDING METHODS ===
     @api.onchange('vendor_id', 'name', 'category', 'version', 'cpe_update', 'cpe_edition', 

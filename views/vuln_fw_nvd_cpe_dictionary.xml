@@ -52,6 +52,7 @@
                             <field name="deprecated"/>
                             <field name="deprecated_date" invisible="not deprecated"/>
                             <field name="deprecated_by" invisible="not deprecated"/>
+                            <field name="is_vulnerable"/>
                         </group>
                     </group>
                     
@@ -73,6 +74,17 @@
                         </page>
                         <page name="references" string="References">
                             <field name="references" widget="text"/>
+                        </page>
+                        <page name="related_cpes" string="Related CPEs" invisible="not product_id">
+                            <group>
+                                <group string="Related Information">
+                                    <field name="product_id" readonly="1" 
+                                           context="{'form_view_ref': 'vuln_fw_nvd_cpe.view_cpe_product_form'}"/>
+                                    <field name="vendor_id" readonly="1"/>
+                                </group>
+                            </group>
+                            <separator string="Other CPE Entries for this Product"/>
+                            <p class="text-muted">Click on the Product above to view all related CPE entries.</p>
                         </page>
                         <page name="sync_info" string="Sync Information">
                             <group>
@@ -115,6 +127,7 @@
                 <field name="match_count" widget="integer"/>
                 -->
                 <field name="deprecated" widget="boolean_toggle"/>
+                <field name="is_vulnerable" widget="boolean_toggle"/>
                 <field name="last_modified" widget="datetime"/>
                 <field name="tags" optional="show"/>
                 <field name="cpe_name" optional="hide"/>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>        
+    <data noupdate="1">        
         <!-- Default National Vulnerability Database CPE Connector -->
         <!-- <record id="vuln_fw_nvd_cpe_api_connector_default" model="vuln.fw.nvd.connector">
             <field name="name">Default National Vulnerability Database CPE Connector</field>
@@ -28,7 +28,7 @@
             <field name="api_url">https://services.nvd.nist.gov/rest/json/cpes/2.0</field>
             <field name="cpe_api_url">https://services.nvd.nist.gov/rest/json/cpes/2.0</field>
             <field name="active">True</field>
-            <field name="connector_active">True</field>
+            <field name="connector_active">False</field>
         </record>
     </data>
 </odoo>
